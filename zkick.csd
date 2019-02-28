@@ -28,7 +28,12 @@ gisine ftgen 1, 0, 16384, 10, 1
 ;								PATCHBAY
 ;==============================================================================
 
-connect "VCO",   "output",     "LPF",     	"input"
+; very much work in progress
+
+; LOUD
+
+connect "VCO",   "output",     "Outputs",     	"inputL"
+connect "VCO",   "output",     "Outputs",     	"inputR"
 connect "LPF",   "output",     "Reverb",     	"input"
 connect "Reverb",   "outputL",     "Outputs",     	"inputL"
 connect "Reverb",   "outputR",     "Outputs",     	"inputR"
@@ -251,22 +256,12 @@ instr VCO
 	if (kWaveReinitTrigger1==1) then
 		reinit oscillator1
 	endif
+    ; just using a saw here, will waveshape
 	oscillator1:
-		aosc1 vco2 0dbfs * 0.4, gkcps, i(kWaveformSelect1), kPWM
-	rireturn
-	if (kWaveReinitTrigger2==1) then
-		reinit oscillator2
-	endif
-	oscillator2:
-		aosc2 vco2 0dbfs * 0.4, gkcps - kDetune2 * 3, i(kWaveformSelect2)
-	rireturn
-	subosc:
-		aosc3 vco2 0dbfs * 0.4, gkcps * 0.5, 10
+		aosc1 vco2 0dbfs * 0.4, gkcps
 	rireturn
 
-	aoscmix sum aosc1 * kOscMixInv, aosc2 * kOscMix, aosc3 * kSubLvl
-	
-	outleta "output", aoscmix
+	outleta "output", aosc1
 endin
 
 instr LPF
