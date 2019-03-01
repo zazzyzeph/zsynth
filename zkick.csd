@@ -14,13 +14,7 @@ ksmps = 32
 nchnls = 2
 0dbfs = 1
 
-gitable ftgen 1, 0, 16384, 10, 1
-; make bandlimited tables of the waveform
-gi_nextfree vco2init -gitable, gitable+1, 1.05, 128, 2^16, gitable
-
-giwaveform ftgen 0, 0, 4, -2, 0, 2, 12, -1
-giwaveform2 ftgen 0, 0, 3, -2, 0, 10, 12
-gisine ftgen 1, 0, 16384, 10, 1
+gifn	ftgen	0,0, 257, 9, .5,1,270	; sigmoid
 
 
 ;==============================================================================
@@ -40,7 +34,7 @@ connect "Reverb",   "outputR",     "Outputs",     	"inputR"
 
 
 alwayson "Gate"
-alwayson "filterEnv"
+alwayson "VcaEnv"
 alwayson "VCO"
 alwayson "LPF"
 alwayson "Reverb"
@@ -219,49 +213,47 @@ instr Gate
 	endif
 endin
 
-instr filterEnv
+instr VcaEnv
 	initc7 1, 1, 0.0001
 	initc7 1, 2, 1
 	initc7 1, 3, 1
 	initc7 1, 4, 1
-	kFiltMax init 1
-	kFiltAttack ctrl7 1, 1, 0.0001, 1
-	kFiltDecay ctrl7 1, 2, 0.001, 1
-	kFiltSustain ctrl7 1, 3, 0.001, 1
-	kFiltRelease ctrl7 1, 4, 0.05, 1
-	if (kFiltSustain > 0.001) then
-		kFiltMax = kFiltSustain
+	kVcaMax init 1
+	kVcaAttack ctrl7 1, 1, 0.0001, 1
+	kVcaDecay ctrl7 1, 2, 0.001, 1
+	kVcaSustain ctrl7 1, 3, 0.001, 1
+	kVcaRelease ctrl7 1, 4, 0.05, 1
+	if (kVcaSustain > 0.001) then
+		kVcaMax = kVcaSustain
 	else
-		kFiltMax = 1
+		kVcaMax = 1
 	endif
-	gkFiltEnv ADSD kFiltMax, kFiltAttack, kFiltDecay, kFiltSustain, gkGate
+	gkVcaEnv ADSD kVcaMax, kVcaAttack, kVcaDecay, kVcaSustain, gkGate
 endin
 
-instr VCO
-	kWaveformSelect1 ctrl7 1, 9, 0, 1, giwaveform
-	kWaveformSelect2 ctrl7 1, 11, 0, 1, giwaveform2
-	kPWM ctrl7 1, 10, 0.5, 0.1
-	kWaveReinitTrigger1 changed kWaveformSelect1
-	kWaveReinitTrigger2 changed kWaveformSelect2
-	kDetune2 ctrl7 1, 12, 0, 1
-	kOscMix ctrl7 1, 13, 0, 1
-	kOscMixInv ctrl7 1, 13, 1, 0
-	kSubLvl ctrl7 1, 14, 0, 1
-	initc7 1, 9, 0
-	initc7 1, 10, 0.5
-	initc7 1, 11, 0
-	initc7 1, 12, 0
-	initc7 1, 13, 0
-	initc7 1, 14, 0
-	if (kWaveReinitTrigger1==1) then
-		reinit oscillator1
-	endif
-    ; just using a saw here, will waveshape
-	oscillator1:
-		aosc1 vco2 0dbfs * 0.4, gkcps
-	rireturn
+; instr pitchEnv
+; 	initc7 1, 1, 0.0001
+; 	initc7 1, 2, 1
+; 	initc7 1, 3, 1
+; 	initc7 1, 4, 1
+; 	kFiltMax init 1
+; 	kFiltAttack ctrl7 1, 1, 0.0001, 1
+; 	kFiltDecay ctrl7 1, 2, 0.001, 1
+; 	kFiltSustain ctrl7 1, 3, 0.001, 1
+; 	kFiltRelease ctrl7 1, 4, 0.05, 1
+; 	if (kFiltSustain > 0.001) then
+; 		kFiltMax = kFiltSustain
+; 	else
+; 		kFiltMax = 1
+; 	endif
+; 	gkFiltEnv ADSD kFiltMax, kFiltAttack, kFiltDecay, kFiltSustain, gkGate
+; endin
 
-	outleta "output", aosc1
+instr VCO
+	asaw vco2 0dbfs * 0.4, gkcps
+	ashaped distort asaw, 1, gifn
+	avca = ashaped * gkVcaEnv
+	outleta "output", avca
 endin
 
 instr LPF
@@ -271,7 +263,7 @@ instr LPF
 	kCutoff ctrl7 1, 5, 0, 1
 	kRes ctrl7 1, 6, 0, 0.9
 	ainput inleta "input"
-	afilt moogladder ainput, ((gkFiltEnv * kCutoff) * 5000), kRes
+	afilt moogladder ainput, 10000, kRes
 	denorm afilt
 	adistorted tap_tubewarmth afilt, kDriveAmt, -5
 	outleta "output", adistorted
