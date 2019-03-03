@@ -1,7 +1,7 @@
 <CsoundSynthesizer>
 
 <CsOptions>
--odac -+rtmidi=virtual -+rtaudio=jack  -M1
+-odac -+rtmidi=alsaseq -+rtaudio=jack  -M1
 </CsOptions>
 
 <CsInstruments>
@@ -10,11 +10,15 @@
 ;							 OPTIONS & TABLES
 ;==============================================================================
 sr = 48000
-ksmps = 32
+kr = 9600
+ksmps = 5
 nchnls = 2
 0dbfs = 1
 
-gifn	ftgen	0,0, 257, 9, .5,1,270	; sigmoid
+gifn	ftgen   2,0,0dbfs,"tanh",1,-1,0	; tanh
+; gifn	ftgen	0,0, 257, 9, .5,1, 270	; sigmoid
+; gifn	ftgen	1, 0, 16384, 10, 1
+gisine ftgen 1, 0, 16384, 10, 1
 
 
 ;==============================================================================
@@ -26,8 +30,8 @@ gifn	ftgen	0,0, 257, 9, .5,1,270	; sigmoid
 
 ; LOUD
 
-connect "VCO",   "output",     "Outputs",     	"inputL"
-connect "VCO",   "output",     "Outputs",     	"inputR"
+connect "Kick",   "output",     "Outputs",     	"inputL"
+connect "Kick",   "output",     "Outputs",     	"inputR"
 connect "LPF",   "output",     "Reverb",     	"input"
 connect "Reverb",   "outputL",     "Outputs",     	"inputL"
 connect "Reverb",   "outputR",     "Outputs",     	"inputR"
@@ -35,9 +39,9 @@ connect "Reverb",   "outputR",     "Outputs",     	"inputR"
 
 alwayson "Gate"
 alwayson "VcaEnv"
-alwayson "VCO"
-alwayson "LPF"
-alwayson "Reverb"
+alwayson "PitchEnv"
+alwayson "NoiseVcaEnv"
+alwayson "Kick"
 alwayson "Outputs"
 
 
@@ -214,76 +218,34 @@ instr Gate
 endin
 
 instr VcaEnv
-	initc7 1, 1, 0.0001
-	initc7 1, 2, 1
-	initc7 1, 3, 1
-	initc7 1, 4, 1
-	kVcaMax init 1
-	kVcaAttack ctrl7 1, 1, 0.0001, 1
-	kVcaDecay ctrl7 1, 2, 0.001, 1
-	kVcaSustain ctrl7 1, 3, 0.001, 1
-	kVcaRelease ctrl7 1, 4, 0.05, 1
-	if (kVcaSustain > 0.001) then
-		kVcaMax = kVcaSustain
-	else
-		kVcaMax = 1
-	endif
-	gkVcaEnv ADSD kVcaMax, kVcaAttack, kVcaDecay, kVcaSustain, gkGate
+	initc7 1, 1, 0.1
+	kDecay ctrl7 1, 1, 0.05, 1
+	gkVcaEnv ADSD 1, 0.005, kDecay, 0, gkGate
 endin
 
-; instr pitchEnv
-; 	initc7 1, 1, 0.0001
-; 	initc7 1, 2, 1
-; 	initc7 1, 3, 1
-; 	initc7 1, 4, 1
-; 	kFiltMax init 1
-; 	kFiltAttack ctrl7 1, 1, 0.0001, 1
-; 	kFiltDecay ctrl7 1, 2, 0.001, 1
-; 	kFiltSustain ctrl7 1, 3, 0.001, 1
-; 	kFiltRelease ctrl7 1, 4, 0.05, 1
-; 	if (kFiltSustain > 0.001) then
-; 		kFiltMax = kFiltSustain
-; 	else
-; 		kFiltMax = 1
-; 	endif
-; 	gkFiltEnv ADSD kFiltMax, kFiltAttack, kFiltDecay, kFiltSustain, gkGate
-; endin
+instr PitchEnv
+	initc7 1, 2, 0.3
+	initc7 1, 3, 0.4
+	kPitchBendAmt ctrl7 1,2,0,1
+	kPitchBendDecay ctrl7 1, 3, 0.001, 1
+	gkPitchBendEnv ADSD kPitchBendAmt, 0.001, kPitchBendDecay, 0, gkGate
+endin
 
-instr VCO
-	asaw vco2 0dbfs * 0.4, gkcps
-	ashaped distort asaw, 1, gifn
-	avca = ashaped * gkVcaEnv
+instr NoiseVcaEnv
+	initc7 1, 4, 0.6
+	initc7 1, 5, 0.2
+	kNoiseVcaAmt ctrl7 1,4,0,0.5
+	kNoiseVcaDecay ctrl7 1, 5, 0.001, 0.2
+	gkNoiseVcaEnv ADSD kNoiseVcaAmt, 0.001, kNoiseVcaDecay, 0, gkGate
+endin
+
+instr Kick
+	asine poscil 0dbfs, gkcps + (gkPitchBendEnv * 300)
+	ashaped distort asine, 0.4, gifn
+	anoise noise 0dbfs * gkNoiseVcaEnv, 0.999
+	amixed distort anoise + ashaped, 0.4, gifn
+	avca = amixed * gkVcaEnv
 	outleta "output", avca
-endin
-
-instr LPF
-	initc7 1, 5, 1
-	initc7 1, 6, 0.0001
-	kDriveAmt ctrl7 1, 7, 2, 20
-	kCutoff ctrl7 1, 5, 0, 1
-	kRes ctrl7 1, 6, 0, 0.9
-	ainput inleta "input"
-	afilt moogladder ainput, 10000, kRes
-	denorm afilt
-	adistorted tap_tubewarmth afilt, kDriveAmt, -5
-	outleta "output", adistorted
-endin
-
-instr Reverb
-	kcont17 init 0.91 ; delay
-	kcont18 init 12000 ;cutoff
-	kcont19 init 0.5 ; dry/wet mix
-	kcont17 ctrl7 1, 17, 0.3, 0.9
-	kcont18 ctrl7 1, 18, 0, 12000
-	kcont19 ctrl7 1, 19, 0, 1
-	kcont19inv ctrl7 1, 19, 1, 0
-	ainput inleta "input"
-	awetleftout, awetrightout reverbsc ainput, ainput, kcont17, kcont18
-	aleftout = (awetleftout*kcont19) + (ainput * kcont19inv)
-	arightout = (awetrightout*(kcont19)) + (ainput * kcont19inv)
-	; Stereo output.
-	outleta "outputL", aleftout
-	outleta "outputR", arightout 
 endin
 
 instr Outputs
