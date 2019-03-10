@@ -1,7 +1,7 @@
 <CsoundSynthesizer>
 
 <CsOptions>
--odac -+rtmidi=alsaseq -+rtaudio=jack  -M1
+-odac -+rtmidi=alsaseq -+rtaudio=jack  -M0
 </CsOptions>
 
 <CsInstruments>
@@ -10,8 +10,7 @@
 ;							 OPTIONS & TABLES
 ;==============================================================================
 sr = 48000
-kr = 9600
-ksmps = 5
+ksmps = 1
 nchnls = 2
 0dbfs = 1
 
@@ -26,22 +25,18 @@ gisine ftgen 1, 0, 16384, 10, 1
 ;								PATCHBAY
 ;==============================================================================
 
-; very much work in progress
+connect "Kick", "output", "Mixer", "input1"
 
-; LOUD
+connect "Mixer",   "output",     "Outputs",     	"inputL"
+connect "Mixer",   "output",     "Outputs",     	"inputR"
 
-connect "Kick",   "output",     "Outputs",     	"inputL"
-connect "Kick",   "output",     "Outputs",     	"inputR"
-connect "LPF",   "output",     "Reverb",     	"input"
-connect "Reverb",   "outputL",     "Outputs",     	"inputL"
-connect "Reverb",   "outputR",     "Outputs",     	"inputR"
-
-
-alwayson "Gate"
+alwayson "Gate0"
+alwayson "Gate1"
 alwayson "VcaEnv"
 alwayson "PitchEnv"
 alwayson "NoiseVcaEnv"
 alwayson "Kick"
+alwayson "Mixer"
 alwayson "Outputs"
 
 
@@ -203,49 +198,73 @@ endop
 ;==============================================================================
 ;								INSTRUMENTS
 ;==============================================================================
-instr midiIn
+instr dummy
+endin
+instr midiIn0
 	icps     cpsmidi
-	gkcps = icps
+	gkcps0 = icps
+endin
+instr midiIn1
+	icps     cpsmidi
+	gkcps1 = icps
 endin
 
-instr Gate
-	kNoteCount active "midiIn"
+instr Gate0
+	kNoteCount active "midiIn0"
 	if (kNoteCount > 0) then
-		gkGate = 1
+		gkGate0 = 1
 	else
-		gkGate = 0
+		gkGate0 = 0
+	endif
+endin
+instr Gate1
+	kNoteCount active "midiIn1"
+	if (kNoteCount > 0) then
+		gkGate1 = 1
+	else
+		gkGate1 = 0
 	endif
 endin
 
 instr VcaEnv
 	initc7 1, 1, 0.1
-	kDecay ctrl7 1, 1, 0.05, 1
-	gkVcaEnv ADSD 1, 0.005, kDecay, 0, gkGate
+	kDecay ctrl7 1, 1, 0.05, 0.3
+	gkVcaEnv ADSD 1, 0.005, kDecay, 0, gkGate0
 endin
 
 instr PitchEnv
 	initc7 1, 2, 0.3
 	initc7 1, 3, 0.4
 	kPitchBendAmt ctrl7 1,2,0,1
-	kPitchBendDecay ctrl7 1, 3, 0.001, 1
-	gkPitchBendEnv ADSD kPitchBendAmt, 0.001, kPitchBendDecay, 0, gkGate
+	kPitchBendDecay ctrl7 1, 3, 0.001, 0.4
+	gkPitchBendEnv ADSD kPitchBendAmt, 0.001, kPitchBendDecay, 0, gkGate0
 endin
 
 instr NoiseVcaEnv
 	initc7 1, 4, 0.6
 	initc7 1, 5, 0.2
-	kNoiseVcaAmt ctrl7 1,4,0,0.5
-	kNoiseVcaDecay ctrl7 1, 5, 0.001, 0.2
-	gkNoiseVcaEnv ADSD kNoiseVcaAmt, 0.001, kNoiseVcaDecay, 0, gkGate
+	kNoiseVcaAmt ctrl7 1,4,0,0.2
+	kNoiseVcaDecay ctrl7 1, 5, 0.001, 0.1
+	gkNoiseVcaEnv ADSD kNoiseVcaAmt, 0.001, kNoiseVcaDecay, 0, gkGate0
 endin
 
 instr Kick
-	asine poscil 0dbfs, gkcps + (gkPitchBendEnv * 300)
+	initc7 1, 6, 0.5
+	initc7 1, 7, 0.5
+	kDriveAmt ctrl7 1, 6, 2, 5
+	kTone ctrl7 1, 7, -10, 10
+	asine poscil 0dbfs, gkcps0 + (gkPitchBendEnv * 150)
 	ashaped distort asine, 0.4, gifn
 	anoise noise 0dbfs * gkNoiseVcaEnv, 0.999
 	amixed distort anoise + ashaped, 0.4, gifn
-	avca = amixed * gkVcaEnv
+	atubed tap_tubewarmth amixed, kDriveAmt, kTone
+	avca = (atubed * 3) * gkVcaEnv
 	outleta "output", avca
+endin
+
+instr Mixer
+  ainput1 inleta "input1"
+  outleta "output", ainput1
 endin
 
 instr Outputs

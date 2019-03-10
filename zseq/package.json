@@ -1,0 +1,25 @@
+{
+  "name": "zseq",
+  "version": "1.0.0",
+  "description": "launchpad sequencer in node",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zazzyzeph/zseq.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/zazzyzeph/zseq/issues"
+  },
+  "homepage": "https://github.com/zazzyzeph/zseq#readme",
+  "dependencies": {
+    "easymidi": "^1.0.1",
+    "launchpad-mini": "^2.1.2",
+    "midi-clock": "0.0.1",
+    "nanoseconds": "^1.0.1"
+  }
+}

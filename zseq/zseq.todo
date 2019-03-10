@@ -1,0 +1,5 @@
+DRUM SEQ SHOULD:
+    ☐ have a master clock
+    ☐ use microseconds
+    ☐ light square when between ranges
+    
