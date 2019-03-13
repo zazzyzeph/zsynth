@@ -35,14 +35,15 @@ pad.connect().then( () => {     // Auto-detect Launchpad
         }
     });
     clock.on('position', function(position){
-        // log on each beat, ignore the rest
-        var sixteenth = position % 4
-        if (sixteenth === 0){
+        var quarter = position % 16 == 0
+        var eighth = position % 8 == 0
+        var sixteenth = position % 4 == 0
+        if (sixteenth){
             rowCounter > 7 ? rowCounter = 0 : '';
             let col = beatCounter % 8;
             let row = rowCounter
             new Promise((resolve)=>{
-                pad.reset(0)
+                pad.reset()
                 resolve();
             }).then(pad.col(pad.green.low, [[col, row]]))
                 .then(pad.col(pad.green.full, activePadsArr))
