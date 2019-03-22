@@ -1,7 +1,8 @@
 <CsoundSynthesizer>
 
 <CsOptions>
--odac -+rtmidi=alsaseq -+rtaudio=jack  -M0
+; find your desired alsa midi port  number w aconnect -i -o
+-odac -+rtmidi=alsaseq -+rtaudio=jack  -M14
 </CsOptions>
 
 <CsInstruments>
@@ -10,7 +11,6 @@
 ;							 OPTIONS & TABLES
 ;==============================================================================
 sr = 48000
-ksmps = 1
 nchnls = 2
 0dbfs = 1
 
@@ -68,6 +68,7 @@ opcode ADSD,k,kkkkk
  endif
  kenv  portk  kv, kt
        xout  kenv
+;  interp these values!
 endop
 
 ; Tube style drive
@@ -198,8 +199,6 @@ endop
 ;==============================================================================
 ;								INSTRUMENTS
 ;==============================================================================
-instr dummy
-endin
 instr midiIn0
 	icps     cpsmidi
 	gkcps0 = icps
@@ -253,12 +252,15 @@ instr Kick
 	initc7 1, 7, 0.5
 	kDriveAmt ctrl7 1, 6, 2, 5
 	kTone ctrl7 1, 7, -10, 10
-	asine poscil 0dbfs, gkcps0 + (gkPitchBendEnv * 150)
+	aPitchBendEnv interp gkPitchBendEnv
+	asine poscil 0dbfs, gkcps0 + (aPitchBendEnv * 150)
 	ashaped distort asine, 0.4, gifn
-	anoise noise 0dbfs * gkNoiseVcaEnv, 0.999
+	aNoiseVcaEnv interp gkNoiseVcaEnv
+	anoise noise 0dbfs * aNoiseVcaEnv, 0.999
 	amixed distort anoise + ashaped, 0.4, gifn
 	atubed tap_tubewarmth amixed, kDriveAmt, kTone
-	avca = (atubed * 3) * gkVcaEnv
+	avca interp gkVcaEnv
+	avca = (atubed * 3) * avca
 	outleta "output", avca
 endin
 

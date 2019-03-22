@@ -4,7 +4,7 @@
   "description": "launchpad sequencer in node",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "./node_modules/mocha/bin/mocha tests/"
   },
   "repository": {
     "type": "git",
@@ -20,6 +20,7 @@
     "easymidi": "^1.0.1",
     "launchpad-mini": "^2.1.2",
     "midi-clock": "0.0.1",
+    "mocha": "^6.0.2",
     "nanoseconds": "^1.0.1"
   }
 }
