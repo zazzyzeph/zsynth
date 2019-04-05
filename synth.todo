@@ -1,0 +1,14 @@
+synth architecture:
+    3 VCO:
+        - two with waveform selectors and PWM, one with detune
+        - one square sub osc
+        - fm?
+    2 VCF:
+        - 1 HPF fed into moogladder vcf
+    REVERB:
+        - shimverb
+
+Isolator!:
+    ☐ in the mixer
+    ☐ 
+    
