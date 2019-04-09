@@ -2,7 +2,7 @@
 
 <CsOptions>
 ; find your desired alsa midi port  number w aconnect -i -o
--odac -+rtmidi=alsaseq -+rtaudio=jack  -M14
+-odac -+rtmidi=virtual -+rtaudio=jack  -M14
 </CsOptions>
 
 <CsInstruments>

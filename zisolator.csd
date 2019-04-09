@@ -2,6 +2,7 @@
 
 <CsOptions>
 ; find your desired alsa midi port  number w aconnect -i -o
+; -odac -+rtmidi=alsaseq -+rtaudio=jack  -M14
 -odac -iadc4 -+rtmidi=alsaseq -+rtaudio=jack  -M14
 </CsOptions>
 
@@ -13,7 +14,7 @@
 sr = 48000
 nchnls = 2
 0dbfs = 1
-ksmps = 8
+ksmps = 32
 
 gifn	ftgen   2,0,0dbfs,"tanh",1,-1,0	; tanh
 giwaveform ftgen 0, 0, 4, -2, 0, 2, 12, -1
@@ -53,34 +54,46 @@ instr Mixer
 	kCrossover1Freq ctrl7 1, 4, 80, 640
 	kCrossover2Freq ctrl7 1, 5, 1000, 8000
 
+	; kLowWidth = kCrossover1Freq * 2
+	; kMidWidth = kCrossover2Freq - kCrossover1Freq
+	; kMidFreq = kCrossover2Freq + kCrossover1Freq / 2
+	; kHighWidth = kCrossover2Freq * 2
+
 	ain1, ain2 ins
 	ain = ain1 * 0.5 + ain2 * 0.5
+	; ain noise 1, 0
 	; 3 way crossover
 	; aLow is low passed at kCrossover1Freq
 	; aMid is high passed at kCrossover1Freq, then low passed at kCrossover2Freq
 	; each band is fed into a peaking filter that removes 3db(still tweaking) so the summed result doesn't clip
-	; aHigh is high passed at kCrossover2Freq
-	; aLow clfilt ain, kCrossover1Freq, 0, 4
-	; aMid clfilt ain, kCrossover1Freq, 0, 4
-	; aMid clfilt ain, kCrossover2Freq, 1, 4
-	; aHigh clfilt ain, kCrossover2Freq, 1, 4
-	aLow clfilt ain, kCrossover1Freq, 0, 4, 0
-	aLow pareq aLow, kCrossover1Freq, ampdb(-12), 0.7
-	aMid clfilt ain, kCrossover2Freq, 0, 4, 0
-	aMid pareq aMid, kCrossover2Freq, ampdb(-12), 0.7
-	aMid clfilt ain, kCrossover1Freq, 1, 4, 0
-	aMid pareq aMid, kCrossover1Freq, ampdb(-12), 0.7
-	aHigh clfilt ain, kCrossover2Freq, 1, 4, 0
-	aHigh pareq aHigh, kCrossover2Freq, ampdb(-12), 0.7
-	; aLow butlp ain, kCrossover1Freq
-	; aLow pareq aLow, kCrossover1Freq, ampdb(-3), sqrt(.5)
-	; aMid butlp ain, kCrossover1Freq
-	; aMid pareq aMid, kCrossover1Freq, ampdb(-3), sqrt(.5)
-	; aMid buthp ain, kCrossover2Freq
-	; aMid pareq aMid, kCrossover2Freq, ampdb(-3), sqrt(.5)
-	; aHigh buthp ain, kCrossover2Freq
-	; aHigh pareq aHigh, kCrossover2Freq, ampdb(-3), sqrt(.5)
-	aout = aLow * aLowLvl + aMid * aMidLvl+ aHigh * aHighLvl
+
+	; aLow clfilt ain, kCrossover1Freq, 0, 4, 0
+	; aMid clfilt ain, kCrossover2Freq, 0, 4, 0
+	; aMid clfilt aMid, kCrossover1Freq, 1, 4, 0
+	; aHigh clfilt ain, kCrossover2Freq, 1, 4, 0
+
+	; aLow butbp ain, 0, kLowWidth
+	; aLow butbp aLow, 0, kLowWidth
+	; aMid butbp ain, kMidFreq, kMidWidth
+	; aMid butbp aMid, kMidFreq, kMidWidth
+	; aHigh butbp ain, kHighWidth, kCrossover2Freq
+	; aHigh butbp aHigh, kHighWidth, kCrossover2Freq
+
+
+	aLow butlp ain, kCrossover1Freq
+	aLow butlp aLow, kCrossover1Freq
+	aMid butlp ain, kCrossover2Freq
+	aMid butlp aMid, kCrossover2Freq
+	aMid buthp aMid, kCrossover1Freq
+	aMid buthp aMid, kCrossover1Freq
+	aHigh buthp ain, kCrossover2Freq
+	aHigh buthp aHigh, kCrossover2Freq
+
+
+	aout = aLow * aLowLvl + aMid * aMidLvl + aHigh * aHighLvl
+	; aout pareq aout, kCrossover1Freq, ampdb(-3), sqrt(0.5)
+	; aout pareq aout, kCrossover2Freq, ampdb(-3), sqrt(0.5)
+	; aout = ain
 
 
 	; might be the thing to do, from http://forum.cabbageaudio.com/t/multiband/734
