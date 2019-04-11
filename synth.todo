@@ -10,5 +10,125 @@ synth architecture:
 
 Isolator!:
     ☐ in the mixer
-    ☐ 
+    ☐ +10db possible?
     
+
+
+Nanokontrol
+sudo lsusb -d 0944:010f -v
+
+    Device Descriptor:
+        bLength                18
+        bDescriptorType         1
+        bcdUSB               1.10
+        bDeviceClass            0 
+        bDeviceSubClass         0 
+        bDeviceProtocol         0 
+        bMaxPacketSize0        16
+        idVendor           0x0944 KORG, Inc.
+        idProduct          0x010f nanoKONTROL studio controller
+        bcdDevice            1.00
+        iManufacturer           1 KORG INC.
+        iProduct                2 nanoKONTROL
+        iSerial                 0 
+        bNumConfigurations      1
+        Configuration Descriptor:
+          bLength                 9
+          bDescriptorType         2
+          wTotalLength       0x0053
+          bNumInterfaces          1
+          bConfigurationValue     1
+          iConfiguration          0 
+          bmAttributes         0x80
+            (Bus Powered)
+          MaxPower              100mA
+          Interface Descriptor:
+            bLength                 9
+            bDescriptorType         4
+            bInterfaceNumber        0
+            bAlternateSetting       0
+            bNumEndpoints           2
+            bInterfaceClass         1 Audio
+            bInterfaceSubClass      3 MIDI Streaming
+            bInterfaceProtocol      0 
+            iInterface              0 
+            MIDIStreaming Interface Descriptor:
+              bLength                 7
+              bDescriptorType        36
+              bDescriptorSubtype      1 (HEADER)
+              bcdADC               1.00
+              wTotalLength       0x0041
+            MIDIStreaming Interface Descriptor:
+              bLength                 6
+              bDescriptorType        36
+              bDescriptorSubtype      2 (MIDI_IN_JACK)
+              bJackType               1 Embedded
+              bJackID                 1
+              iJack                   3 nanoKONTROL _ CTRL
+            MIDIStreaming Interface Descriptor:
+              bLength                 6
+              bDescriptorType        36
+              bDescriptorSubtype      2 (MIDI_IN_JACK)
+              bJackType               2 External
+              bJackID                 2
+              iJack                   0 
+            MIDIStreaming Interface Descriptor:
+              bLength                 9
+              bDescriptorType        36
+              bDescriptorSubtype      3 (MIDI_OUT_JACK)
+              bJackType               1 Embedded
+              bJackID                 3
+              bNrInputPins            1
+              baSourceID( 0)          2
+              BaSourcePin( 0)         1
+              iJack                   4 nanoKONTROL _ SLIDER/KNOB
+            MIDIStreaming Interface Descriptor:
+              bLength                 9
+              bDescriptorType        36
+              bDescriptorSubtype      3 (MIDI_OUT_JACK)
+              bJackType               2 External
+              bJackID                 4
+              bNrInputPins            1
+              baSourceID( 0)          1
+              BaSourcePin( 0)         1
+              iJack                   0 
+            Endpoint Descriptor:
+              bLength                 9
+              bDescriptorType         5
+              bEndpointAddress     0x82  EP 2 IN
+              bmAttributes            2
+                Transfer Type            Bulk
+                Synch Type               None
+                Usage Type               Data
+              wMaxPacketSize     0x0040  1x 64 bytes
+              bInterval               1
+              bRefresh                0
+              bSynchAddress           0
+              MIDIStreaming Endpoint Descriptor:
+                bLength                 5
+                bDescriptorType        37
+                bDescriptorSubtype      1 (GENERAL)
+                bNumEmbMIDIJack         1
+                baAssocJackID( 0)       3
+            Endpoint Descriptor:
+              bLength                 9
+              bDescriptorType         5
+              bEndpointAddress     0x02  EP 2 OUT
+              bmAttributes            2
+                Transfer Type            Bulk
+                Synch Type               None
+                Usage Type               Data
+              wMaxPacketSize     0x0040  1x 64 bytes
+              bInterval               0
+              bRefresh                0
+              bSynchAddress           0
+              MIDIStreaming Endpoint Descriptor:
+                bLength                 5
+                bDescriptorType        37
+                bDescriptorSubtype      1 (GENERAL)
+                bNumEmbMIDIJack         1
+                baAssocJackID( 0)       1
+      can't get debug descriptor: Resource temporarily unavailable
+      Device Status:     0x0001
+        Self Powered
+      

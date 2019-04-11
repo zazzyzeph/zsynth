@@ -54,6 +54,9 @@ instr Mixer
 	kCrossover1Freq ctrl7 1, 4, 80, 640
 	kCrossover2Freq ctrl7 1, 5, 1000, 8000
 
+	aCrossover1Freq interp kCrossover1Freq
+	aCrossover2Freq interp kCrossover2Freq
+
 	; kLowWidth = kCrossover1Freq * 2
 	; kMidWidth = kCrossover2Freq - kCrossover1Freq
 	; kMidFreq = kCrossover2Freq + kCrossover1Freq / 2
@@ -80,14 +83,14 @@ instr Mixer
 	; aHigh butbp aHigh, kHighWidth, kCrossover2Freq
 
 
-	aLow butlp ain, kCrossover1Freq
-	aLow butlp aLow, kCrossover1Freq
-	aMid butlp ain, kCrossover2Freq
-	aMid butlp aMid, kCrossover2Freq
-	aMid buthp aMid, kCrossover1Freq
-	aMid buthp aMid, kCrossover1Freq
-	aHigh buthp ain, kCrossover2Freq
-	aHigh buthp aHigh, kCrossover2Freq
+	aLow butlp ain, aCrossover1Freq
+	aLow butlp aLow, aCrossover1Freq
+	aMid butlp ain, aCrossover2Freq
+	aMid butlp aMid, aCrossover2Freq
+	aMid buthp aMid, aCrossover1Freq
+	aMid buthp aMid, aCrossover1Freq
+	aHigh buthp ain, aCrossover2Freq
+	aHigh buthp aHigh, aCrossover2Freq
 
 
 	aout = aLow * aLowLvl + aMid * aMidLvl + aHigh * aHighLvl
